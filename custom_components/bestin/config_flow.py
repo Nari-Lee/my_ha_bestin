@@ -181,6 +181,9 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
                 })
             }),
             errors=errors,
+            description_placeholders={
+                "docs_url": "https://github.com/lunDreame/ha-bestin/blob/main/guide/center.md"
+            }
         )
 
     async def async_step_center_v1(
