@@ -44,33 +44,6 @@ ENERGY_BYTE_RANGE = {
 }
 
 
-class AsyncQueue:
-    def __init__(self):
-        self.queue = asyncio.Queue()
-
-    async def put(self, item):
-        """Function to put data into the queue"""
-        await self.queue.put(item)
-    
-    async def get(self):
-        """Function to get data from the queue (only retrieve, not delete)"""
-        if not self.queue.empty():
-            item = await self.queue.get()
-            await self.queue.put(item)
-            return item
-        return None
-    
-    async def delete(self):
-        """Function to delete data from the queue"""
-        if not self.queue.empty():
-            return await self.queue.get()
-        return None
-    
-    async def size(self):
-        """Function to return the size of the queue"""
-        return self.queue.qsize()
-
-
 class BestinController:
     """Controller for managing Bestin devices and communication."""
 
@@ -94,7 +67,8 @@ class BestinController:
         self.room_to_command: dict[bytes] = entry.data["gateway_mode"][1]
         
         self.devices: dict[str, DeviceProfile] = {}
-        self.queue = AsyncQueue()
+        self.queue = asyncio.Queue()
+        self.current_command = None
         self.tasks: list[asyncio.Task] = []
         self.timestamp = 0
 
@@ -665,22 +639,26 @@ class BestinController:
     
     async def handle_packet_queue(self, queue: dict):
         """Handle a packet from the queue"""
-        await self.send_packet_queue(queue)
-        acknowledgment = queue["acknowledgment"]
-        send_retry = queue["send_retry"]
         max_retry = self.entry.options.get("max_send_retry", DEFAULT_MAX_SEND_RETRY)
 
+        while queue["send_retry"] <= max_retry and not queue["acknowledgment"]:
+            await self.send_packet_queue(queue)
+            
+            for _ in range(3):
+                if queue["acknowledgment"]:
+                    break
+                await asyncio.sleep(0.1)
+
+        acknowledgment = queue["acknowledgment"]
         if acknowledgment:
             LOGGER.info(
                 "%s: Success (ACK: %s, Attempts: %d)",
-                queue["device_type"], acknowledgment.hex(), queue["send_retry"]
+                queue["device_type"], acknowledgment.hex(), queue["send_retry"] - 1
             )
-            await self.queue.delete()
-        elif send_retry > max_retry:
+        else:
             LOGGER.warning(
                 "%s: Failed after %d attempts", queue["device_type"], max_retry
             )
-            await self.queue.delete()
 
     async def process_incoming_data(self):
         """Process incoming data"""
@@ -700,9 +678,8 @@ class BestinController:
                 if checksum_valid:
                     self.handle_device_packet(received_data)
 
-                    if await self.queue.size() > 0:
-                        queue_item = await self.queue.get()
-                        self.validate_response(received_data, queue_item)
+                    if self.current_command is not None:
+                        self.validate_response(received_data, self.current_command)
             except Exception as ex:
                 LOGGER.error(f"Failed to process incoming data: {ex}", exc_info=True)
 
@@ -717,10 +694,10 @@ class BestinController:
         """Process data in the queue"""
         while True:
             try:
-                if await self.queue.size() > 0:
-                    queue_item = await self.queue.get()
-                    await self.handle_packet_queue(queue_item)
-                else:
-                    await asyncio.sleep(0.1)
+                self.current_command = await self.queue.get()
+                await self.handle_packet_queue(self.current_command)
+                self.queue.task_done()
+                self.current_command = None
             except Exception as ex:
                 LOGGER.error(f"Failed to process task queue: {ex}", exc_info=True)
+                self.current_command = None

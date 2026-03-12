@@ -5,7 +5,8 @@ from __future__ import annotations
 from homeassistant.components.sensor import (
     DOMAIN as DOMAIN_SENSOR,
     SensorEntity,
-    SensorDeviceClass
+    SensorDeviceClass,
+    SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
@@ -150,5 +151,5 @@ class BestinSensor(BestinDevice, SensorEntity):
     def state_class(self):
         """Type of this sensor state."""
         if self._device_info.device_type in ["light:dcvalue", "outlet:powercons", "energy"]:
-            return "total_increasing" if "total" in self._attr_id else "measurement"
+            return SensorStateClass.TOTAL_INCREASING if "total" in self._attr_id else SensorStateClass.MEASUREMENT
         return None

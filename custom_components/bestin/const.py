@@ -7,7 +7,7 @@ from homeassistant.const import Platform
 
 DOMAIN = "bestin"
 NAME = "BESTIN"
-VERSION = "1.1.9"
+VERSION = "1.2.0"
 
 PLATFORMS: list[Platform] = [
     Platform.CLIMATE,
@@ -50,7 +50,7 @@ NEW_CLIMATE = "climates"
 NEW_FAN = "fans"
 NEW_LIGHT = "lights"
 NEW_SENSOR = "sensors"
-NEW_SWITCH = "switchs"
+NEW_SWITCH = "switches"
 
 MAIN_DEVICES: list[str] = [
     "fan",
