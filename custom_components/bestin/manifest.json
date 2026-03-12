@@ -2,16 +2,16 @@
   "domain": "bestin",
   "name": "BESTIN",
   "codeowners": [
-    "@lunDreame"
+    "@Nari-Lee"
   ],
   "config_flow": true,
-  "documentation": "https://github.com/lunDreame/ha-bestin",
+  "documentation": "https://github.com/Nari-Lee/ha_bestin_private",
   "iot_class": "local_push",
-  "issue_tracker": "https://github.com/lunDreame/ha-bestin/issues",
+  "issue_tracker": "https://github.com/Nari-Lee/ha_bestin_private/issues",
   "requirements": [
     "pyserial-asyncio",
     "aiofiles",
     "xmltodict"
   ],
-  "version": "1.2.0"
+  "version": "1.2.1"
 }
