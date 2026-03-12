@@ -1,10 +1,5 @@
 {
   "name": "BESTIN",
-  "hacs": "1.32.0",
-  "homeassistant": "2024.8.1",
   "render_readme": true,
-  "iot_class": "Local Push",
-  "domain": "bestin",
-  "zip_release": false,
-  "filename": "bestin"
+  "homeassistant": "2024.8.1"
 }
