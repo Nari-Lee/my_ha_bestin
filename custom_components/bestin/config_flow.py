@@ -4,13 +4,14 @@ from __future__ import annotations
 from typing import Any
 
 import asyncio
+import aiohttp
 import voluptuous as vol
 
 from homeassistant.core import callback
 from homeassistant.config_entries import (
     ConfigFlow, 
     ConfigEntry,
-    FlowResult,
+    ConfigFlowResult,
     OptionsFlow,
     SOURCE_IMPORT,
 )
@@ -26,7 +27,7 @@ from homeassistant.const import (
 import homeassistant.helpers.config_validation as cv
 
 from homeassistant.helpers.selector import selector
-from homeassistant.helpers.aiohttp_client import async_create_clientsession
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .hub import BestinHub
 from .const import (
@@ -43,7 +44,7 @@ from .const import (
 )
 
 
-class ConfigFlow(ConfigFlow, domain=DOMAIN):
+class BestinConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for BESTIN."""
 
     VERSION = 1
@@ -53,7 +54,7 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
     @callback
     def async_get_options_flow(entry: ConfigEntry) -> OptionsFlow:
         """Get the options flow for this handler."""
-        return OptionsFlowHandler(entry)
+        return OptionsFlowHandler()
     
     @staticmethod
     def int_between(min_int, max_int):
@@ -63,14 +64,14 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_user(
         self, 
         user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Handle a flow initialized by the user."""
         return self.async_show_menu(step_id="user", menu_options=["local", "center"])
 
     async def async_step_local(
         self, 
         user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Handle local communication setup."""
         errors = {}
 
@@ -80,7 +81,7 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
             
             try:
                 hub = BestinHub(self.hass, entry=None)
-                await asyncio.wait_for(hub.connect(host, port), timeout=5)
+                await asyncio.wait_for(hub.connect(host, port), timeout=aiohttp.ClientTimeout(total=5))
             except asyncio.TimeoutError as ex:
                 LOGGER.error(f"Connection to {host}:{port} failed due to timeout: {ex}")
                 errors["base"] = "connect_failed"
@@ -107,7 +108,7 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
         }
 
         try:
-            async with session.get(url=url, params=params, timeout=5) as response:
+            async with session.get(url=url, params=params, timeout=aiohttp.ClientTimeout(total=5)) as response:
                 resp = await response.json(content_type="text/html")
 
                 if response.status == 200 and "_fair" not in resp["ret"]:
@@ -140,7 +141,7 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
         }
 
         try:
-            async with session.post(url=url, headers=headers, timeout=5) as response:
+            async with session.post(url=url, headers=headers, timeout=aiohttp.ClientTimeout(total=5)) as response:
                 resp = await response.json()
         
                 if response.status == 200:
@@ -160,7 +161,7 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_center(
         self, 
         user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Handle user selection for center version."""
         errors = {}
 
@@ -189,13 +190,13 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_center_v1(
         self, 
         user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Handle the center version 1."""
         errors = {}
         description_placeholders = None  
 
         if user_input is not None:
-            session = async_create_clientsession(self.hass)
+            session = async_get_clientsession(self.hass)
 
             response, error_message = await self._v1_server_login(user_input, session)
 
@@ -224,13 +225,13 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
     async def async_step_center_v2(
         self,
         user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Handle the center version 2."""
         errors = {}
         description_placeholders = None  
 
         if user_input is not None:
-            session = async_create_clientsession(self.hass)
+            session = async_get_clientsession(self.hass)
 
             response, error_message = await self._v2_server_login(user_input, session)
 
@@ -244,7 +245,7 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
                 return self.async_create_entry(title=user_input[CONF_UUID], data=user_input)
 
         data_schema = vol.Schema({
-            vol.Required("elevator_number", default=1): ConfigFlow.int_between(1, 4),
+            vol.Required("elevator_number", default=1): BestinConfigFlow.int_between(1, 4),
             vol.Optional(CONF_IP_ADDRESS): cv.string,
             vol.Required(CONF_UUID): cv.string,
         })
@@ -260,38 +261,34 @@ class ConfigFlow(ConfigFlow, domain=DOMAIN):
 class OptionsFlowHandler(OptionsFlow):
     """Handle an option flow for BESTIN."""
 
-    def __init__(self, entry: ConfigEntry) -> None:
-        """Initialize options flow."""
-        self.entry = entry
-    
     def get_data_schema(self) -> vol.Schema:
         """Get the appropriate schema based on the entry data."""
-        if CONF_SESSION not in self.entry.data:
+        if CONF_SESSION not in self.config_entry.data:
             return vol.Schema({
                 vol.Required(
                     "max_send_retry", 
-                    default=self.entry.options.get("max_send_retry", DEFAULT_MAX_SEND_RETRY)
-                ): ConfigFlow.int_between(1, 30),
+                    default=self.config_entry.options.get("max_send_retry", DEFAULT_MAX_SEND_RETRY)
+                ): BestinConfigFlow.int_between(1, 30),
                 vol.Required(
                     "packet_viewer",
-                    default=self.entry.options.get("packet_viewer", DEFAULT_PACKET_VIEWER)
+                    default=self.config_entry.options.get("packet_viewer", DEFAULT_PACKET_VIEWER)
                 ): cv.boolean,
             })
         return vol.Schema({
             vol.Required(
                 CONF_SCAN_INTERVAL,
-                default=self.entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+                default=self.config_entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
             ): cv.positive_int,
         })
 
     async def async_step_init(
         self,
         user_input: dict[str, Any] | None = None
-    ) -> FlowResult:
+    ) -> ConfigFlowResult:
         """Handle options flow."""
         errors = {}
 
-        if self.entry.source == SOURCE_IMPORT:
+        if self.config_entry.source == SOURCE_IMPORT:
             return self.async_show_form(step_id="init", data_schema=None)
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)

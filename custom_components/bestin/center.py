@@ -16,10 +16,6 @@ from homeassistant.components.climate.const import (
     ATTR_CURRENT_TEMPERATURE,
     HVACMode,
 )
-from homeassistant.components.light import (
-    COLOR_MODE_BRIGHTNESS,
-    COLOR_MODE_COLOR_TEMP,
-)
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
@@ -36,6 +32,8 @@ from homeassistant.const import (
 
 from .const import (
     LOGGER,
+    COLOR_MODE_BRIGHTNESS,
+    COLOR_MODE_COLOR_TEMP,
     BRAND_PREFIX,
     SMART_HOME_1,
     CONF_SESSION,
@@ -89,7 +87,7 @@ class CenterAPIv2:
         }
 
         try:
-            async with self.session.post(url=url, headers=headers, timeout=5) as response:
+            async with self.session.post(url=url, headers=headers, timeout=aiohttp.ClientTimeout(total=5)) as response:
                 resp = await response.json()
 
                 if response.status != 200:
@@ -598,7 +596,7 @@ class BestinCenterAPI(CenterAPIv2):
             "login_pwd": self.entry.data[CONF_PASSWORD]
         }
         try:
-            async with self.session.get(url=url, params=params, timeout=5) as response:
+            async with self.session.get(url=url, params=params, timeout=aiohttp.ClientTimeout(total=5)) as response:
                 resp = await response.json(content_type="text/html")
                 if response.status != 200 or "_fair" in resp:
                     LOGGER.error(f"Session refresh failed: {resp.get('msg', 'Unknown error')}")

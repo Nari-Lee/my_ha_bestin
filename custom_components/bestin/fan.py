@@ -5,17 +5,16 @@ from __future__ import annotations
 from typing import Any, Optional
 
 from homeassistant.components.fan import (
-    DOMAIN as FAN_DOMAIN,
     ATTR_PRESET_MODE,
     ATTR_PRESET_MODES,
     FanEntity,
     FanEntityFeature,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_ON, STATE_OFF, ATTR_STATE, WIND_SPEED
+from homeassistant.const import STATE_ON, STATE_OFF, ATTR_STATE, WIND_SPEED, Platform
 from homeassistant.core import callback, HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.util.percentage import (
     ordered_list_item_to_percentage,
     percentage_to_ordered_list_item,
@@ -30,12 +29,14 @@ from .const import (
 from .device import BestinDevice
 from .hub import BestinHub
 
+FAN_DOMAIN = Platform.FAN
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
-) -> bool:
+    async_add_entities: AddConfigEntryEntitiesCallback,
+) -> None:
     """Setup fan platform."""
     hub: BestinHub = BestinHub.get_hub(hass, entry)
     hub.entity_groups[FAN_DOMAIN] = set()

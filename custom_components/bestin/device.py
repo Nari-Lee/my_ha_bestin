@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from typing import Any
 
-from homeassistant.helpers.entity import Entity, DeviceInfo
+from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity import Entity
 from homeassistant.core import callback
 
 from .const import DOMAIN, MAIN_DEVICES
@@ -71,13 +72,13 @@ class BestinDevice(BestinBase, Entity):
         """Subscribe to device events upon addition to HASS."""
         self._device.add_callback(self.async_update_callback)
         self.hub.entity_to_id[self.entity_id] = self._device_info.device_id
-        self.schedule_update_ha_state()
+        self.async_write_ha_state()
 
     async def async_will_remove_from_hass(self) -> None:
         """Cleanup when the entity is removed from HASS."""
         self._device.remove_callback(self.async_update_callback)
-        del self.hub.entity_to_id[self.entity_id]
-        self.hub.entity_groups[self.TYPE].remove(self.unique_id)
+        self.hub.entity_to_id.pop(self.entity_id, None)
+        self.hub.entity_groups[self.TYPE].discard(self.unique_id)
 
     @callback
     def async_restore_last_state(self, last_state) -> None:

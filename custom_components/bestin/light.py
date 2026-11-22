@@ -6,29 +6,33 @@ from typing import Optional
 
 from homeassistant.components.light import (
     ColorMode,
-    DOMAIN as LIGHT_DOMAIN,
     LightEntity,
-    COLOR_MODE_BRIGHTNESS,
-    COLOR_MODE_COLOR_TEMP,
     ATTR_BRIGHTNESS,
     ATTR_COLOR_TEMP_KELVIN,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_ON, STATE_OFF, ATTR_STATE
+from homeassistant.const import STATE_ON, STATE_OFF, ATTR_STATE, Platform
 from homeassistant.core import callback, HomeAssistant
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import CONF_VERSION, NEW_LIGHT
+from .const import (
+    CONF_VERSION,
+    COLOR_MODE_BRIGHTNESS,
+    COLOR_MODE_COLOR_TEMP,
+    NEW_LIGHT,
+)
 from .device import BestinDevice
 from .hub import BestinHub
+
+LIGHT_DOMAIN = Platform.LIGHT
 
 
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
-) -> bool:
+    async_add_entities: AddConfigEntryEntitiesCallback,
+) -> None:
     """Setup light platform."""
     hub: BestinHub = BestinHub.get_hub(hass, entry)
     hub.entity_groups[LIGHT_DOMAIN] = set()

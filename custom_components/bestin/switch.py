@@ -3,18 +3,19 @@
 from __future__ import annotations
 
 from homeassistant.components.switch import (
-    DOMAIN as SWITCH_DOMAIN,
     SwitchEntity,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_ON, STATE_OFF
+from homeassistant.const import STATE_ON, STATE_OFF, Platform
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import CONF_VERSION, NEW_SWITCH
 from .device import BestinDevice
 from .hub import BestinHub
+
+SWITCH_DOMAIN = Platform.SWITCH
 
 DEVICE_ICON = {
     "outlet": "mdi:power-socket",
@@ -30,8 +31,8 @@ DEVICE_ICON = {
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
-) -> bool:
+    async_add_entities: AddConfigEntryEntitiesCallback,
+) -> None:
     """Setup switch platform."""
     hub: BestinHub = BestinHub.get_hub(hass, entry)
     hub.entity_groups[SWITCH_DOMAIN] = set()

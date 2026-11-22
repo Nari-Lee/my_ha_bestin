@@ -7,7 +7,7 @@ from homeassistant.const import Platform
 
 DOMAIN = "bestin"
 NAME = "BESTIN"
-VERSION = "1.2.0"
+VERSION = "1.3.0"
 
 PLATFORMS: list[Platform] = [
     Platform.CLIMATE,
@@ -45,6 +45,10 @@ PRESET_NONE = "none"
 PRESET_NV = "natural_ventilation"
 
 BRAND_PREFIX = "bestin"
+
+# State dict keys for dimmable lights (replaces removed light.COLOR_MODE_* constants)
+COLOR_MODE_BRIGHTNESS = "brightness"
+COLOR_MODE_COLOR_TEMP = "color_temp"
 
 NEW_CLIMATE = "climates"
 NEW_FAN = "fans"

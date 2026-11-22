@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from homeassistant.components.sensor import (
-    DOMAIN as DOMAIN_SENSOR,
     SensorEntity,
     SensorDeviceClass,
     SensorStateClass,
@@ -11,17 +10,20 @@ from homeassistant.components.sensor import (
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.const import (
+    Platform,
     UnitOfEnergy,
     UnitOfPower,
     UnitOfVolume,
     UnitOfVolumeFlowRate
 )
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import NEW_SENSOR
 from .device import BestinDevice
 from .hub import BestinHub
+
+DOMAIN_SENSOR = Platform.SENSOR
 
 DEVICE_ICON = {
     "light:dcvalue": "mdi:flash",
@@ -91,8 +93,8 @@ def extract_and_transform(identifier: str) -> str:
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
-) -> bool:
+    async_add_entities: AddConfigEntryEntitiesCallback,
+) -> None:
     """Setup sensor platform."""
     hub: BestinHub = BestinHub.get_hub(hass, entry)
     hub.entity_groups[DOMAIN_SENSOR] = set()

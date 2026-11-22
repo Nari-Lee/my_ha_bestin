@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from homeassistant.components.climate import DOMAIN as CLIMATE_DOMAIN, ClimateEntity
+from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import (
     ATTR_HVAC_MODE,
     ATTR_CURRENT_TEMPERATURE,
@@ -12,6 +12,7 @@ from homeassistant.components.climate.const import (
 )
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
+    Platform,
     STATE_ON,
     STATE_OFF,
     ATTR_TEMPERATURE,
@@ -19,18 +20,20 @@ from homeassistant.const import (
 )
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
 from .const import CONF_VERSION, NEW_CLIMATE
 from .device import BestinDevice
 from .hub import BestinHub
 
+CLIMATE_DOMAIN = Platform.CLIMATE
+
 
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
-) -> bool:
+    async_add_entities: AddConfigEntryEntitiesCallback,
+) -> None:
     """Setup climate platform."""
     hub: BestinHub = BestinHub.get_hub(hass, entry)
     hub.entity_groups[CLIMATE_DOMAIN] = set()
@@ -60,8 +63,6 @@ async def async_setup_entry(
 class BestinClimate(BestinDevice, ClimateEntity):
     """Defined the Climate."""
     TYPE = CLIMATE_DOMAIN
-    
-    _enable_turn_on_off_backwards_compatibility = False
 
     def __init__(self, device, hub: BestinHub):
         """Initialize the climate."""

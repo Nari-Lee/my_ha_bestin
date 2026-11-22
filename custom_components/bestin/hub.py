@@ -2,7 +2,7 @@
 import re
 import time
 import asyncio
-import serial_asyncio
+import serial_asyncio_fast as serial_asyncio
 import socket
 
 from typing import cast
@@ -392,7 +392,6 @@ class BestinHub:
         if self.gateway_mode:
             self.gateway_mode = None
 
-    @callback
     async def shutdown(self, event: Event) -> None:
         """Shutdown the hub."""
         if self.api:

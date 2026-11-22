@@ -10,16 +10,14 @@ from homeassistant.components.climate.const import (
     HVACMode,
 )
 from homeassistant.components.fan import SERVICE_SET_PERCENTAGE
-from homeassistant.components.light import (
-    COLOR_MODE_BRIGHTNESS,
-    COLOR_MODE_COLOR_TEMP,
-)
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.const import ATTR_STATE, WIND_SPEED
 
 from .const import (
     LOGGER,
+    COLOR_MODE_BRIGHTNESS,
+    COLOR_MODE_COLOR_TEMP,
     DEFAULT_MAX_SEND_RETRY,
     DEFAULT_PACKET_VIEWER,
     BRAND_PREFIX,
@@ -75,8 +73,12 @@ class BestinController:
     async def start(self):
         """Start the controller tasks"""
         self.tasks = [
-            self.hass.loop.create_task(self.process_incoming_data()),
-            self.hass.loop.create_task(self.process_queue_data())
+            self.entry.async_create_background_task(
+                self.hass, self.process_incoming_data(), "bestin_incoming_data"
+            ),
+            self.entry.async_create_background_task(
+                self.hass, self.process_queue_data(), "bestin_queue_data"
+            ),
         ]
         await asyncio.sleep(1)
 
