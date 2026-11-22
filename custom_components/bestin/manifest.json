@@ -5,9 +5,9 @@
     "@Nari-Lee"
   ],
   "config_flow": true,
-  "documentation": "https://github.com/Nari-Lee/ha_bestin_private",
+  "documentation": "https://github.com/Nari-Lee/my_ha_bestin",
   "iot_class": "local_push",
-  "issue_tracker": "https://github.com/Nari-Lee/ha_bestin_private/issues",
+  "issue_tracker": "https://github.com/Nari-Lee/my_ha_bestin/issues",
   "requirements": [
     "pyserial-asyncio-fast",
     "aiofiles",
